@@ -1,10 +1,10 @@
 import base64
+import csv
 import io
 
 import matplotlib
 matplotlib.use('Agg')  # Configurar backend no interactivo
 import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
@@ -13,29 +13,43 @@ FEATURES = ["Age", "Annual Income (k$)", "Spending Score (1-100)"]
 
 
 def cargar_dataset(path=DATA_PATH):
-    df = pd.read_csv(path)
-    df = df.dropna(subset=FEATURES)
-    return df
+    datos = []
+    with open(path, encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            try:
+                fila = {
+                    "CustomerID": int(row["CustomerID"]),
+                    "Gender": row["Gender"].strip(),
+                    "Age": float(row["Age"]),
+                    "Annual Income (k$)": float(row["Annual Income (k$)"]),
+                    "Spending Score (1-100)": float(row["Spending Score (1-100)"]),
+                }
+                datos.append(fila)
+            except (KeyError, ValueError):
+                continue
+    return datos
 
 
-def obtener_descripcion(df):
+def obtener_descripcion(data):
+    columnas = ["CustomerID", "Gender"] + FEATURES
     return {
-        "registros": int(df.shape[0]),
+        "registros": len(data),
         "variables": FEATURES,
-        "columnas": df.columns.tolist(),
+        "columnas": columnas,
         "descripcion": "Dataset de clientes para segmentación de comportamiento y gasto.",
     }
 
 
-def preprocesar(df, features=FEATURES):
-    X = df[features].copy()
+def preprocesar(data, features=FEATURES):
+    X = [[row[feature] for feature in features] for row in data]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     return X_scaled, scaler
 
 
-def calcular_elbow(df, max_k=10):
-    X_scaled, _ = preprocesar(df)
+def calcular_elbow(data, max_k=10):
+    X_scaled, _ = preprocesar(data)
     inertias = []
     for k in range(1, max_k + 1):
         model = KMeans(n_clusters=k, random_state=42, n_init=10)
@@ -44,13 +58,16 @@ def calcular_elbow(df, max_k=10):
     return inertias
 
 
-def aplicar_kmeans(df, k=4, features=FEATURES):
-    X_scaled, scaler = preprocesar(df, features)
+def aplicar_kmeans(data, k=4, features=FEATURES):
+    X_scaled, scaler = preprocesar(data, features)
     model = KMeans(n_clusters=k, random_state=42, n_init=10)
     etiquetas = model.fit_predict(X_scaled)
-    df_result = df.copy()
-    df_result["Cluster"] = etiquetas.astype(int)
-    return df_result, model, scaler
+    resultados = []
+    for i, row in enumerate(data):
+        fila = row.copy()
+        fila["Cluster"] = int(etiquetas[i])
+        resultados.append(fila)
+    return resultados, model, scaler
 
 
 def fig_to_base64(fig):
@@ -61,14 +78,15 @@ def fig_to_base64(fig):
     return base64.b64encode(buffer.read()).decode("utf-8")
 
 
-def generar_grafica_clusters(df, model, scaler, x_col="Annual Income (k$)", y_col="Spending Score (1-100)"):
+def generar_grafica_clusters(data, model, scaler, x_col="Annual Income (k$)", y_col="Spending Score (1-100)"):
     fig, ax = plt.subplots(figsize=(8, 6))
     colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple", "tab:brown", "tab:pink", "tab:gray"]
-    for cluster in sorted(df["Cluster"].unique()):
-        subset = df[df["Cluster"] == cluster]
+    clusters = sorted({row["Cluster"] for row in data})
+    for cluster in clusters:
+        subset = [row for row in data if row["Cluster"] == cluster]
         ax.scatter(
-            subset[x_col],
-            subset[y_col],
+            [row[x_col] for row in subset],
+            [row[y_col] for row in subset],
             s=55,
             alpha=0.75,
             color=colors[cluster % len(colors)],
