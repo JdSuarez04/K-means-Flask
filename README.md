@@ -37,19 +37,7 @@ python app.py
 
 5. Abre en navegador: http://127.0.0.1:5000
 
-## Estructura del proyecto
 
-```
-├── app.py                 # Aplicación Flask principal
-├── Clustering.py          # Módulo de clustering y visualización
-├── data/
-│   └── mall_customers.csv # Dataset de clientes
-├── templates/
-│   ├── base.html          # Plantilla base
-│   └── index.html         # Página principal
-├── generate_dataset.py    # Script para generar dataset
-└── requirements.txt       # Dependencias
-```
 
 ## Tecnologías utilizadas
 
@@ -69,17 +57,3 @@ El dataset contiene información sintética de 200 clientes de un centro comerci
 - Annual Income (k$): Ingreso anual en miles de dólares
 - Spending Score (1-100): Puntaje de gasto asignado por el centro comercial
 
-## Algoritmo K-Means
-
-- Normalización de datos con StandardScaler
-- Selección de K usando el método del codo
-- Visualización de clústeres en 2D (Ingreso vs Puntaje de Gasto)
-- Cálculo de centroides
-
-## Autor
-
-[Tu Nombre]
-
-## Licencia
-
-Este proyecto es para fines educativos.
