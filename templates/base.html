@@ -1,37 +1,404 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>K-Means Flask</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-Gw2m7OgUD+G6GoldjMdxqU/sDykYTnJCFPbr8kq0gXK8uCNGyKO4wQ7Fchj+gTA8" crossorigin="anonymous">
-    <style>
-      body { padding-top: 72px; }
-      .cluster-table { font-size: 0.9rem; }
-      .section-title { margin-top: 2rem; margin-bottom: 1rem; }
-      .plot-img { width: 100%; height: auto; border: 1px solid #dee2e6; padding: 8px; background: #fff; }
-    </style>
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-      <a class="navbar-brand" href="/">K-Means Clustering</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item"><a class="nav-link" href="#problema">Problema</a></li>
-          <li class="nav-item"><a class="nav-link" href="#dataset">Dataset</a></li>
-          <li class="nav-item"><a class="nav-link" href="#kmeans">K-Means</a></li>
-          <li class="nav-item"><a class="nav-link" href="#resultado">Resultado</a></li>
-          <li class="nav-item"><a class="nav-link" href="#interpretacion">Interpretación</a></li>
-        </ul>
-      </div>
-    </nav>
-    <main class="container">
-      {% block content %}{% endblock %}
-    </main>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdTmcDFfMoNxJfAzcnF7q5u1YHmrhAmEQg4ZhfvbY3wG8J0WpquPxv8fq3c4vo" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2LcEoPJ2KxMUfCpHNpZp9V9BsI0YNylcwzjCu1z0nQ" crossorigin="anonymous"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>K-Means Clustering</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #08090d;
+      --surface:   #0f1117;
+      --card:      #141720;
+      --border:    #1e2233;
+      --accent:    #6c63ff;
+      --accent2:   #00e5c0;
+      --accent3:   #ff6b6b;
+      --text:      #e8eaf2;
+      --muted:     #5a5f7a;
+      --mono:      'Space Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      padding-top: 68px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── grid overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(108,99,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── navbar ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+      background: rgba(8,9,13,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-brand {
+      font-family: var(--mono);
+      font-size: .85rem;
+      color: var(--accent2);
+      text-decoration: none;
+      letter-spacing: .08em;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .nav-brand::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 10px var(--accent2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.6rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: color .2s;
+    }
+
+    .nav-links a:hover { color: var(--accent2); }
+
+    /* ── main container ── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* ── hero ── */
+    .hero {
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+      animation: fadeUp .6s ease both;
+    }
+
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: .7rem;
+      color: var(--accent);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: .8rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      color: var(--muted);
+      max-width: 560px;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* ── sections ── */
+    section {
+      margin-bottom: 3.5rem;
+      animation: fadeUp .5s ease both;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--accent);
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+
+    section h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    section p, section li {
+      color: #9096b4;
+      line-height: 1.75;
+      font-size: .95rem;
+    }
+
+    section ul {
+      padding-left: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+
+    section ul li::marker { color: var(--accent2); }
+
+    strong { color: var(--text); }
+
+    /* ── cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.6rem;
+      transition: border-color .2s;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    /* ── form ── */
+    .cluster-form {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.8rem;
+    }
+
+    .cluster-form label {
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--muted);
+      letter-spacing: .06em;
+    }
+
+    .cluster-form input[type=number] {
+      width: 80px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 1rem;
+      padding: .5rem .8rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .cluster-form input[type=number]:focus { border-color: var(--accent); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .55rem 1.4rem;
+      font-family: var(--mono);
+      font-size: .8rem;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+
+    .btn-primary:hover { background: #8880ff; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ── plots grid ── */
+    .plots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) { .plots-grid { grid-template-columns: 1fr; } }
+
+    .plot-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+
+    .plot-card:hover { border-color: var(--accent2); }
+
+    .plot-header {
+      padding: .9rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--accent2);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .plot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── table ── */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+      font-family: var(--mono);
+    }
+
+    thead tr {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: .85rem 1rem;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: .68rem;
+      text-align: left;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(108,99,255,.06); }
+
+    td {
+      padding: .75rem 1rem;
+      color: #9096b4;
+    }
+
+    .badge-cluster {
+      display: inline-block;
+      padding: .2rem .7rem;
+      border-radius: 20px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+
+    /* cluster badge colors */
+    .c0 { background: rgba(108,99,255,.2); color: #a09cff; }
+    .c1 { background: rgba(0,229,192,.2); color: #00e5c0; }
+    .c2 { background: rgba(255,107,107,.2); color: #ff8e8e; }
+    .c3 { background: rgba(255,196,0,.2);  color: #ffc400; }
+    .c4 { background: rgba(80,200,120,.2); color: #50c878; }
+
+    /* ── footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    section:nth-child(1) { animation-delay: .05s; }
+    section:nth-child(2) { animation-delay: .1s; }
+    section:nth-child(3) { animation-delay: .15s; }
+    section:nth-child(4) { animation-delay: .2s; }
+    section:nth-child(5) { animation-delay: .25s; }
+    section:nth-child(6) { animation-delay: .3s; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">kmeans_clustering.py</a>
+  <ul class="nav-links">
+    <li><a href="#problema">Problema</a></li>
+    <li><a href="#dataset">Dataset</a></li>
+    <li><a href="#kmeans">K-Means</a></li>
+    <li><a href="#resultado">Resultado</a></li>
+    <li><a href="#interpretacion">Interpretación</a></li>
+  </ul>
+</nav>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  © 2025 &nbsp;·&nbsp; K-Means Clustering App &nbsp;·&nbsp; Flask + scikit-learn
+</footer>
+
+</body>
 </html>
