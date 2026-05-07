@@ -1,67 +1,90 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <h1 class="mt-4">Aplicación Flask de K-Means Clustering</h1>
-    <p class="lead">Análisis de clientes usando un dataset realista de centro comercial y la agrupación automática con K-Means.</p>
-  </div>
+
+<!-- HERO -->
+<div class="hero">
+  <p class="hero-tag">// Unsupervised Machine Learning</p>
+  <h1>K-Means<br>Clustering</h1>
+  <p>Segmentación automática de clientes de un centro comercial usando edad, ingreso anual y puntaje de gasto.</p>
 </div>
 
-<section id="problema" class="mt-5">
-  <h2 class="section-title">1. Descripción del problema</h2>
-  <p>Se busca segmentar clientes de un centro comercial con base en su edad, ingreso anual y puntaje de gasto. El objetivo es identificar grupos de comportamiento similares para mejorar estrategias de marketing y servicio.</p>
+<!-- 1. PROBLEMA -->
+<section id="problema">
+  <p class="section-label">01 — Descripción</p>
+  <h2>Problema</h2>
+  <div class="card">
+    <p>Se busca segmentar clientes de un centro comercial con base en su <strong>edad</strong>, <strong>ingreso anual</strong> y <strong>puntaje de gasto</strong>. El objetivo es identificar grupos de comportamiento similar para optimizar estrategias de marketing y servicio personalizado.</p>
+  </div>
 </section>
 
+<!-- 2. DATASET -->
 <section id="dataset">
-  <h2 class="section-title">2. Dataset</h2>
-  <p>El dataset contiene <strong>{{ info.registros }}</strong> registros de clientes, con las siguientes variables principales:</p>
-  <ul>
-    <li><strong>Age</strong>: Edad del cliente.</li>
-    <li><strong>Annual Income (k$)</strong>: Ingreso anual en miles de dólares.</li>
-    <li><strong>Spending Score (1-100)</strong>: Puntaje de gasto calculado por el centro comercial.</li>
-  </ul>
-  <p>Las variables escogidas para el clustering son numéricas y permiten distinguir segmentos de clientes según su comportamiento y capacidad de compra.</p>
+  <p class="section-label">02 — Datos</p>
+  <h2>Dataset</h2>
+  <div class="card">
+    <p>El dataset contiene <strong>{{ info.registros }}</strong> registros de clientes con las siguientes variables:</p>
+    <ul style="margin-top:1rem;">
+      <li><strong>Age</strong> — Edad del cliente.</li>
+      <li><strong>Annual Income (k$)</strong> — Ingreso anual en miles de dólares.</li>
+      <li><strong>Spending Score (1–100)</strong> — Puntaje calculado por el centro comercial.</li>
+    </ul>
+    <p style="margin-top:1rem;">Las variables son numéricas y permiten distinguir segmentos según comportamiento y capacidad de compra.</p>
+  </div>
 </section>
 
+<!-- 3. K-MEANS -->
 <section id="kmeans">
-  <h2 class="section-title">3. Conceptos principales de K-Means</h2>
-  <p>K-Means es un algoritmo de agrupamiento no supervisado que divide los datos en <em>K</em> clústeres, buscando minimizar la variación interna de cada grupo. Cada clúster es representado por un centroide que resume el comportamiento promedio de sus miembros.</p>
+  <p class="section-label">03 — Algoritmo</p>
+  <h2>K-Means</h2>
+  <div class="card">
+    <p>K-Means es un algoritmo de agrupamiento <strong>no supervisado</strong> que divide los datos en <em>K</em> clústeres minimizando la variación interna de cada grupo. Cada clúster es representado por un <strong>centroide</strong> que resume el comportamiento promedio de sus miembros.</p>
+  </div>
 </section>
 
+<!-- 4. EJECUCIÓN -->
 <section id="ejecucion">
-  <h2 class="section-title">4. Ejecución del modelo</h2>
-  <form method="post" class="form-inline mb-4">
-    <label for="k_clusters" class="mr-2">Número de clústeres (K):</label>
-    <input type="number" id="k_clusters" name="k_clusters" min="2" max="10" value="{{ selected_k }}" class="form-control mr-2" required>
-    <button type="submit" class="btn btn-primary">Aplicar K-Means</button>
+  <p class="section-label">04 — Configuración</p>
+  <h2>Ejecutar modelo</h2>
+  <form method="post" class="cluster-form">
+    <label for="k_clusters">Número de clústeres (K)</label>
+    <input type="number" id="k_clusters" name="k_clusters"
+           min="2" max="10" value="{{ selected_k }}" required>
+    <button type="submit" class="btn-primary">▶ Aplicar K-Means</button>
   </form>
-  <p>El valor de K se puede ajustar y comparar con la gráfica del método del codo.</p>
+  <p style="margin-top:.9rem; font-size:.82rem;">Ajusta K y compara con la gráfica del método del codo.</p>
 </section>
 
-<section id="grafica" class="row">
-  <div class="col-md-6">
-    <h3>Gráfica del método del codo</h3>
-    <img src="data:image/png;base64,{{ grafico_elbow }}" class="plot-img" alt="Metodo del codo">
-  </div>
-  <div class="col-md-6">
-    <h3>Gráfica de clústeres y centroides</h3>
-    <img src="data:image/png;base64,{{ grafico_clusters }}" class="plot-img" alt="Gráfica de clústeres">
+<!-- 5. GRÁFICAS -->
+<section id="grafica">
+  <p class="section-label">05 — Visualización</p>
+  <h2>Gráficas</h2>
+  <div class="plots-grid">
+    <div class="plot-card">
+      <div class="plot-header">📉 Método del codo</div>
+      <img src="data:image/png;base64,{{ grafico_elbow }}" alt="Método del codo">
+    </div>
+    <div class="plot-card">
+      <div class="plot-header">🔵 Clústeres y centroides (K={{ selected_k }})</div>
+      <img src="data:image/png;base64,{{ grafico_clusters }}" alt="Gráfica de clústeres">
+    </div>
   </div>
 </section>
 
-<section id="resultado" class="mt-4">
-  <h2 class="section-title">5. Resultados del clustering</h2>
-  <p>Se aplicó K-Means con K = <strong>{{ selected_k }}</strong>. A continuación se presentan los primeros registros procesados y su clúster asignado.</p>
-  <div class="table-responsive">
-    <table class="table table-striped table-bordered cluster-table">
-      <thead class="thead-light">
+<!-- 6. RESULTADOS -->
+<section id="resultado">
+  <p class="section-label">06 — Resultados</p>
+  <h2>Tabla de clústeres</h2>
+  <p style="margin-bottom:1.2rem;">K-Means aplicado con <strong>K = {{ selected_k }}</strong>. Primeros 20 registros procesados:</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
         <tr>
-          <th>CustomerID</th>
-          <th>Gender</th>
-          <th>Age</th>
-          <th>Annual Income (k$)</th>
-          <th>Spending Score (1-100)</th>
-          <th>Cluster</th>
+          <th>ID</th>
+          <th>Género</th>
+          <th>Edad</th>
+          <th>Ingreso (k$)</th>
+          <th>Spending Score</th>
+          <th>Clúster</th>
         </tr>
       </thead>
       <tbody>
@@ -72,18 +95,26 @@
           <td>{{ row.Age }}</td>
           <td>{{ row['Annual Income (k$)'] }}</td>
           <td>{{ row['Spending Score (1-100)'] }}</td>
-          <td>{{ row.Cluster }}</td>
+          <td>
+            <span class="badge-cluster c{{ row.Cluster % 5 }}">
+              Clúster {{ row.Cluster }}
+            </span>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p>El conjunto completo de resultados está disponible en la aplicación y puede descargarse del dataset para análisis adicional.</p>
 </section>
 
-<section id="interpretacion" class="mt-4">
-  <h2 class="section-title">6. Interpretación de resultados</h2>
-  <p>Cada clúster agrupa clientes con similitudes de ingreso y comportamiento de gasto. Por ejemplo, un clúster puede representar clientes jóvenes y de alto gasto, mientras otro agrupa clientes mayores con ingresos altos y puntajes de gasto moderados.</p>
-  <p>El método del codo ayuda a justificar la elección de K observando dónde la inercia disminuye menos drásticamente al aumentar el número de clústeres.</p>
+<!-- 7. INTERPRETACIÓN -->
+<section id="interpretacion">
+  <p class="section-label">07 — Análisis</p>
+  <h2>Interpretación</h2>
+  <div class="card">
+    <p>Cada clúster agrupa clientes con similitudes de ingreso y comportamiento de gasto. Por ejemplo, un clúster puede representar <strong>clientes jóvenes de alto gasto</strong>, mientras otro agrupa <strong>clientes mayores con ingresos altos y gasto moderado</strong>.</p>
+    <p style="margin-top:1rem;">El <strong>método del codo</strong> justifica la elección de K observando dónde la inercia disminuye menos drásticamente al aumentar el número de clústeres.</p>
+  </div>
 </section>
+
 {% endblock %}
